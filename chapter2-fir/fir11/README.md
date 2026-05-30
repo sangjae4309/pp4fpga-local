@@ -19,33 +19,6 @@ Reference: [Parallel Programming for FPGAs, Ch. 2 – FIR Filters](https://kastn
 | `fir_pipeline_directive` | [src/fir_pipeline_directive.cpp](src/fir_pipeline_directive.cpp) | Loop pipelining with HLS pragmas |
 | `fir_pipeline_directive_bit_opt` | [src/fir_pipeline_directive_bit_opt.cpp](src/fir_pipeline_directive_bit_opt.cpp) | Pipeline version using `ap_int` coefficient type |
 
-### What is code hoisting?
-
-`fir.cpp` handles the last tap (`i == 0`) inside the loop with a conditional:
-
-```cpp
-for (i = N-1; i >= 0; i--) {
-    if (i == 0) {           // branch evaluated every iteration
-        acc += x * c[0];
-        shift_reg[0] = x;
-    } else {
-        shift_reg[i] = shift_reg[i-1];
-        acc += shift_reg[i] * c[i];
-    }
-}
-```
-
-`fir_code_hoist.cpp` moves that case outside the loop, so the loop body is uniform:
-
-```cpp
-for (i = N-1; i > 0; i--) {  // no branch inside
-    shift_reg[i] = shift_reg[i-1];
-    acc += shift_reg[i] * c[i];
-}
-acc += x * c[0];              // hoisted out
-shift_reg[0] = x;
-```
-
 Removing the branch gives the HLS scheduler a cleaner loop body, which can improve pipeline initiation interval (II) and resource usage.
 
 ---
@@ -150,52 +123,3 @@ its output. `II` is the initiation interval: how many cycles must pass before
 the next `fir()` call can start. For repeated sample processing, lower II means
 higher throughput.
 
----
-
-## Result Analysis
-
-Only `fir_code_hoist` improves over the baseline in this experiment. It removes
-the `if (i == 0)` branch from the main shift-and-accumulate loop, so the loop
-body is more uniform and easier for the HLS scheduler to pipeline. In the
-current reports, this reduces latency from 19 to 17 cycles, II from 20 to 18,
-and LUT usage from 407 to 390.
-
-The loop-fission, unrolling, and pipeline-directive versions are slower than the
-baseline because their code structure is not equivalent from the scheduler's
-point of view. The baseline performs shift-register update and MAC accumulation
-inside one loop. The fission-based versions split that work into two sequential
-loops:
-
-```cpp
-// TDL: update shift register
-for (...) {
-    shift_reg[i] = shift_reg[i - 1];
-}
-
-// MAC: multiply-accumulate
-for (...) {
-    acc += shift_reg[i] * c[i];
-}
-```
-
-That means one sample executes the TDL loop first, then the MAC loop. The HLS
-report for `fir_pipeline_directive` shows this directly: the TDL instance has
-12 cycles of latency and the MAC instance has 16 cycles of latency, while the
-overall function latency is 33 cycles and II is 34. The pragma pipelines the
-individual loops, but the top-level `fir()` function is still reported as
-`Pipeline: no`, so the two stages do not become a single streaming pipeline.
-
-Manual and pragma unrolling also increase resource usage because the MAC loop
-uses more parallel multipliers and extra control/address/mux logic. In the
-current reports, both unrolled versions use 4 DSPs instead of 2 and over 1000
-LUTs, but they still execute after the separate shift-register loop. The added
-parallel hardware therefore does not compensate for the loop-splitting overhead
-in this design.
-
-The takeaway is that HLS directives are not automatically beneficial. Applying
-unroll or pipeline to a loop can make a design larger or slower if the memory
-access pattern, loop dependencies, and top-level scheduling structure are not
-also changed. To make unrolling or pipelining pay off for this FIR, the design
-would need additional structural changes such as array partitioning, a true
-parallel reduction tree, or a dataflow/streaming architecture with stage
-dependencies handled explicitly.
