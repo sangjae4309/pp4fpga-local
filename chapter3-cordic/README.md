@@ -3,10 +3,9 @@
 | Design | Code | Description |
 | --- | --- | --- |
 | CORDIC Sin/Cos | [`cordic_sin_cos`](cordic_sin_cos) | Computes sine and cosine for an input angle using CORDIC rotations. |
+| CORDIC Sin/Cos Fixed-Point | [`cordic_sin_cos_optim_fixed_point`](cordic_sin_cos_optim_fixed_point) | Optimizes the sin/cos CORDIC implementation with `ap_fixed<16, 2>` types. |
 | Basic CORDIC | [`cordic_cart2pol`](cordic_cart2pol) | Implements Cartesian-to-polar conversion with the CORDIC rotation structure. |
 | CORDIC LUT | [`cordic_cart2pol_lut`](cordic_cart2pol_lut) | Uses lookup tables for Cartesian-to-polar conversion. |
-| FIR Frontend | [`phase_detector/fir_top`](phase_detector/fir_top) | Filters input I/Q samples before phase detection. |
-| Phase Detector | [`phase_detector/phasedetector`](phase_detector/phasedetector) | Combines FIR filtering and CORDIC-based Cartesian-to-polar conversion. |
 
 ## What is CORDIC?
 
