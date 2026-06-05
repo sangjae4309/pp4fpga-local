@@ -5,6 +5,9 @@
 // cordic_phase[0] ~= 0.785
 // cordic_phase[1] ~= 0.463
 
+/*
+ * theta: target angle to approximate
+ */
 void cordic(THETA_TYPE theta, COS_SIN_TYPE &s, COS_SIN_TYPE &c)
 {
     // Set the initial vector that we will rotate.

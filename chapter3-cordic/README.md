@@ -122,3 +122,17 @@ in on-chip memory. By repeatedly applying the CORDIC rotation matrix with
 different directions, the hardware can approximate almost any target angle.
 The result is a hardware-friendly rotation method that replaces expensive
 trigonometric operations with table lookup, addition, subtraction, and shifts.
+
+## Optimization Result
+
+The table below compares the floating-point CORDIC sin/cos implementation with
+the fixed-point version using `ap_fixed<16, 2>`.
+
+| Implementation | Sin RMSE | Cos RMSE | Latency | LUT | FF | DSP |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| [`cordic_sin_cos`](cordic_sin_cos) | `0.0000939686` | `0.0001302474` | `212 cycles` | `1847` | `1204` | `10` |
+| [`cordic_sin_cos_optim_fixed_point`](cordic_sin_cos_optim_fixed_point) | `0.0001871195` | `0.0001241061` | `33 cycles` | `372` | `137` | `0` |
+
+Using fixed-point arithmetic removes floating-point operators from the design.
+The result is much lower LUT/FF usage, zero DSP usage, and shorter latency,
+while keeping the C-simulation error around the `1e-4` range.

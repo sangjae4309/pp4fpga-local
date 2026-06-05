@@ -2,7 +2,7 @@
 
 Local Vitis HLS lab implementations based on **[Parallel Programming for FPGAs](https://kastner.ucsd.edu/hlsbook/)** by R. Kastner, J. Matai, and S. Neuendorffer (UCSD).
 
-The original lab materials target Xilinx/AMD tools. This repository adapts them to run locally using the Vitis HLS command-line flow (`vitis-run`), with a Python-based script.
+Unlikely to the [original materials](https://pp4fpgas.readthedocs.io/en/latest/) which targets Pynq Z2 board, This repo targets using Xilinx HLS tools and adapts original materials to run locally using the Vitis HLS command-line flow (`vitis-run`), with a Python-based script.
 
 ---
 
